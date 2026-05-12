@@ -1,0 +1,169 @@
+---
+title: "Getting Started with Next.js 16: App Router Deep Dive"
+description: "A comprehensive guide to building modern web applications with Next.js 16, covering the App Router, Server Components, and performance best practices."
+date: "2025-04-15"
+category: nextjs
+tags: ["nextjs", "react", "app-router", "typescript", "web-development"]
+image: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=1200&h=630&fit=crop"
+published: true
+featured: true
+author: alex
+---
+
+Next.js 16 brings significant improvements to the App Router paradigm, making it easier than ever to build fast, scalable web applications. In this guide, we'll explore the key concepts and best practices.
+
+## What's New in Next.js 16
+
+Next.js 16 introduces several groundbreaking features:
+
+- **Turbopack as default** — The Rust-based bundler is now the default dev server
+- **Improved caching** — More predictable and controllable caching behavior
+- **Partial Prerendering** — Mix static and dynamic content on the same page
+- **Better TypeScript** — Enhanced type inference for server actions
+
+## Understanding the App Router
+
+The App Router uses a file-system based routing convention where:
+
+```
+app/
+  layout.tsx        ← Root layout (wraps all pages)
+  page.tsx          ← Home route (/)
+  blog/
+    page.tsx        ← /blog
+    [slug]/
+      page.tsx      ← /blog/:slug
+```
+
+### Server Components by Default
+
+Every component in the `app/` directory is a **React Server Component** by default. This means they:
+
+- Run only on the server
+- Can directly access databases and file systems
+- Don't add to the client-side JavaScript bundle
+- Cannot use hooks like `useState` or `useEffect`
+
+```tsx
+// This is a Server Component — no "use client" needed
+async function BlogPage() {
+  const posts = await db.posts.findMany(); // Direct DB access!
+  return <PostList posts={posts} />;
+}
+```
+
+### Client Components
+
+When you need interactivity, add `'use client'` at the top:
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+
+export function LikeButton({ initialCount }: { initialCount: number }) {
+  const [count, setCount] = useState(initialCount);
+  return (
+    <button onClick={() => setCount(c => c + 1)}>
+      ❤️ {count}
+    </button>
+  );
+}
+```
+
+## Data Fetching Patterns
+
+### Parallel Data Fetching
+
+Avoid waterfalls by fetching data in parallel:
+
+```tsx
+async function Dashboard() {
+  // ✅ Both fetch in parallel
+  const [user, posts] = await Promise.all([
+    getUser(),
+    getPosts(),
+  ]);
+
+  return <DashboardUI user={user} posts={posts} />;
+}
+```
+
+### Streaming with Suspense
+
+Use `Suspense` to progressively render content:
+
+```tsx
+import { Suspense } from 'react';
+import { PostSkeleton } from './PostSkeleton';
+
+export default function Page() {
+  return (
+    <div>
+      <h1>Blog</h1>
+      <Suspense fallback={<PostSkeleton />}>
+        <Posts />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+## Performance Optimization
+
+### Image Optimization
+
+Always use `next/image` for images:
+
+```tsx
+import Image from 'next/image';
+
+<Image
+  src="/hero.jpg"
+  alt="Hero image"
+  width={1200}
+  height={630}
+  priority // For above-the-fold images
+/>
+```
+
+### Font Optimization
+
+Use `next/font` for zero-layout-shift font loading:
+
+```tsx
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] });
+
+export default function Layout({ children }) {
+  return (
+    <html className={inter.className}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+## Static Generation
+
+For content that doesn't change often, use static generation:
+
+```tsx
+export const revalidate = 3600; // Revalidate every hour
+
+// OR for fully static pages:
+export const dynamic = 'force-static';
+
+// Generate pages at build time
+export async function generateStaticParams() {
+  const posts = await getPosts();
+  return posts.map(post => ({ slug: post.slug }));
+}
+```
+
+## Conclusion
+
+Next.js 16 makes it remarkably easy to build high-performance web applications. The combination of Server Components, the App Router, and built-in optimizations gives you everything you need to ship production-ready apps.
+
+Start with the official starter: `npx create-next-app@latest --typescript` and explore these patterns in your own projects!

@@ -1,0 +1,220 @@
+---
+title: "Building a Production Blog with MDX and Next.js"
+description: "Learn how to build a fully-featured blog using MDX and Next.js App Router — with syntax highlighting, table of contents, reading time, and more."
+date: "2025-02-10"
+category: tutorials
+tags: ["mdx", "nextjs", "tutorial", "blog", "gray-matter"]
+image: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&h=630&fit=crop"
+published: true
+featured: true
+author: alex
+---
+
+MDX combines the simplicity of Markdown with the power of React components, making it the perfect choice for developer blogs. In this tutorial, we'll build a full-featured blog from scratch.
+
+## What We're Building
+
+By the end of this tutorial, you'll have:
+
+- ✅ MDX blog posts with frontmatter
+- ✅ Syntax highlighting with rehype-highlight
+- ✅ Auto-generated table of contents
+- ✅ Reading time estimation
+- ✅ Category and tag filtering
+- ✅ Full-text search with Fuse.js
+
+## Project Setup
+
+```bash
+npx create-next-app@latest my-blog --typescript --tailwind
+cd my-blog
+npm install gray-matter reading-time remark-gfm rehype-slug rehype-highlight rehype-autolink-headings fuse.js
+```
+
+## Content Structure
+
+Organize your content by category:
+
+```
+content/
+  blogs/
+    nextjs/
+      getting-started.mdx
+    ai/
+      intro-to-agents.mdx
+    tutorials/
+      mdx-blog.mdx
+```
+
+## MDX Frontmatter Schema
+
+Define a consistent schema for all posts:
+
+```mdx
+---
+title: "My Post Title"
+description: "A brief description for SEO and previews."
+date: "2025-01-15"
+category: nextjs
+tags: ["react", "typescript"]
+image: "/images/post-hero.jpg"
+published: true
+featured: false
+author: alex
+---
+```
+
+## Reading Posts from the Filesystem
+
+```typescript
+// lib/mdx/getPosts.ts
+import path from 'path';
+import fs from 'fs';
+import matter from 'gray-matter';
+import readingTime from 'reading-time';
+
+const BLOGS_PATH = path.join(process.cwd(), 'content/blogs');
+
+function getAllMdxFiles(dir: string): string[] {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  return entries.flatMap((entry) => {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) return getAllMdxFiles(fullPath);
+    if (entry.name.endsWith('.mdx')) return [fullPath];
+    return [];
+  });
+}
+
+export function getPosts(): BlogPost[] {
+  return getAllMdxFiles(BLOGS_PATH)
+    .map((filePath) => {
+      const { data, content } = matter(fs.readFileSync(filePath, 'utf-8'));
+      const slug = path.basename(filePath, '.mdx');
+      return {
+        slug,
+        content,
+        readingTime: readingTime(content).text,
+        ...data,
+      } as BlogPost;
+    })
+    .filter((p) => p.published)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+```
+
+## Rendering MDX Content
+
+Use `react-markdown` with rehype plugins for rich rendering:
+
+```tsx
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeSlug from 'rehype-slug';
+
+export function PostContent({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeSlug, rehypeHighlight]}
+      components={{
+        h2: ({ children, id }) => (
+          <h2 id={id} className="text-3xl font-bold mt-10 mb-4 scroll-mt-24">
+            {children}
+          </h2>
+        ),
+        code: ({ children, className }) => {
+          if (className) {
+            return <code className={className}>{children}</code>;
+          }
+          return (
+            <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-rose-600 dark:text-rose-400 text-sm">
+              {children}
+            </code>
+          );
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+```
+
+## Generating Table of Contents
+
+Extract headings from the markdown content:
+
+```typescript
+export function extractToc(content: string): TocItem[] {
+  const headingRegex = /^(#{2,4})\s+(.+)$/gm;
+  const toc: TocItem[] = [];
+  let match;
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    const level = match[1].length;
+    const text = match[2].replace(/[`*_~]/g, '').trim();
+    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    toc.push({ id, text, level });
+  }
+
+  return toc;
+}
+```
+
+## Search with Fuse.js
+
+Build a client-side search index:
+
+```typescript
+import Fuse from 'fuse.js';
+
+const fuse = new Fuse(posts, {
+  keys: [
+    { name: 'title', weight: 3 },
+    { name: 'description', weight: 2 },
+    { name: 'tags', weight: 1.5 },
+    { name: 'content', weight: 1 },
+  ],
+  threshold: 0.3,
+  ignoreLocation: true,
+});
+
+const results = fuse.search(query).map(r => r.item);
+```
+
+## Syntax Highlighting
+
+Import the highlight.js theme in your global CSS:
+
+```css
+/* Import in your globals.css or syntax.css */
+@import 'highlight.js/styles/github-dark.css';
+```
+
+Or use a custom theme targeting `.hljs` classes.
+
+## Deployment
+
+Deploy to Vercel in one command:
+
+```bash
+vercel --prod
+```
+
+Vercel automatically handles:
+- Static generation of all blog pages
+- Image optimization
+- Edge caching
+- Automatic HTTPS
+
+## What's Next?
+
+Now that you have the foundation, you can add:
+
+- **Comments** with Giscus or Utterances
+- **View counter** with Vercel KV
+- **Newsletter** with Resend or Mailchimp
+- **Admin panel** for non-technical authors
+
+Happy blogging! 🚀

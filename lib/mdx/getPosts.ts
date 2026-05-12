@@ -1,54 +1,126 @@
+import path from 'path';
+import fs from 'fs';
+import matter from 'gray-matter';
+import readingTime from 'reading-time';
+import type { BlogPost, PostCategory } from '@/types/blog';
+import { sortByDate } from '@/lib/utils/date';
 
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
-import readingTime from "reading-time";
+const BLOGS_PATH = path.join(process.cwd(), 'content/blogs');
 
-import { BlogPost } from "@/types/blog";
+function getAllMdxFiles(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const files: string[] = [];
 
-const BLOGS_PATH = path.join(process.cwd(), "content/blogs");
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...getAllMdxFiles(fullPath));
+    } else if (entry.name.endsWith('.mdx') || entry.name.endsWith('.md')) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
 
-export function getPosts(): BlogPost[] {
-  // read all files
-  const files = fs.readdirSync(BLOGS_PATH);
+function fileToSlug(filePath: string): string {
+  // Use flat slug (filename only) to match [slug] route
+  return path.basename(filePath).replace(/\.(mdx|md)$/, '').toLowerCase();
+}
 
-  // filter only mdx files
-  const mdxFiles = files.filter((file) => file.endsWith(".mdx"));
+export function getPosts(publishedOnly = true): BlogPost[] {
+  const files = getAllMdxFiles(BLOGS_PATH);
 
-  // map posts
-  const posts = mdxFiles.map((file) => {
-    const filePath = path.join(BLOGS_PATH, file);
+  const posts = files
+    .map((filePath) => {
+      try {
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const { data, content } = matter(fileContent);
+        const slug = fileToSlug(filePath);
 
-    // read file content
-    const fileContent = fs.readFileSync(filePath, "utf-8");
+        return {
+          slug,
+          content,
+          readingTime: readingTime(content).text,
+          title: data.title ?? '',
+          description: data.description ?? '',
+          date: data.date ?? new Date().toISOString(),
+          category: (data.category ?? 'tutorials') as PostCategory,
+          tags: data.tags ?? [],
+          image: data.image ?? '',
+          published: data.published ?? false,
+          featured: data.featured ?? false,
+          author: data.author ?? 'team',
+        } satisfies BlogPost;
+      } catch {
+        return null;
+      }
+    })
+    .filter((p): p is BlogPost => p !== null)
+    .filter((p) => (publishedOnly ? p.published : true));
 
-    // parse frontmatter
-    const { data, content } = matter(fileContent);
+  return sortByDate(posts);
+}
 
-    // generate slug
-    const slug = file.replace(".mdx", "");
+export function getFeaturedPosts(limit = 3): BlogPost[] {
+  return getPosts().filter((p) => p.featured).slice(0, limit);
+}
 
-    return {
-      slug,
-      content,
-      readingTime: readingTime(content).text,
+export function getPostsByCategory(category: PostCategory): BlogPost[] {
+  return getPosts().filter((p) => p.category === category);
+}
 
-      title: data.title,
-      description: data.description,
-      date: data.date,
-      category: data.category,
-      tags: data.tags || [],
-      image: data.image,
-      mediaImages:data.mediaImages||[],
-      published: data.published,
-      featured: data.featured,
-      author: data.author,
-    };
-  });
-
-  // sort latest first
-  return posts.sort(
-    (a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
+export function getPostsByTag(tag: string): BlogPost[] {
+  return getPosts().filter((p) =>
+    p.tags.map((t) => t.toLowerCase()).includes(tag.toLowerCase())
   );
+}
+
+export function getAllCategories(): PostCategory[] {
+  const posts = getPosts();
+  return [...new Set(posts.map((p) => p.category))];
+}
+
+export function getAllTags(): string[] {
+  const posts = getPosts();
+  return [...new Set(posts.flatMap((p) => p.tags))].sort();
+}
+
+export function getAllSlugs(): string[] {
+  return getPosts().map((p) => p.slug);
+}
+
+export function getRelatedPosts(currentSlug: string, limit = 3): BlogPost[] {
+  const currentPost = getPosts().find((p) => p.slug === currentSlug);
+  if (!currentPost) return [];
+
+  return getPosts()
+    .filter((p) => p.slug !== currentSlug)
+    .map((p) => {
+      const sharedTags = p.tags.filter((t) => currentPost.tags.includes(t)).length;
+      const sameCategory = p.category === currentPost.category ? 1 : 0;
+      return { post: p, score: sharedTags * 2 + sameCategory };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((item) => item.post);
+}
+
+export function paginatePosts(
+  posts: BlogPost[],
+  page: number,
+  perPage: number
+): { posts: BlogPost[]; totalPages: number; currentPage: number; total: number } {
+  const total = posts.length;
+  const totalPages = Math.ceil(total / perPage);
+  const currentPage = Math.min(Math.max(1, page), totalPages || 1);
+  const start = (currentPage - 1) * perPage;
+  const end = start + perPage;
+
+  return {
+    posts: posts.slice(start, end),
+    totalPages,
+    currentPage,
+    total,
+  };
 }

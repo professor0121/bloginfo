@@ -1,0 +1,273 @@
+/* Typography — Article prose styles */
+
+.prose {
+  color: #374151;
+  max-width: 72ch;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+}
+
+.dark .prose {
+  color: #d1d5db;
+}
+
+/* Headings */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+  scroll-margin-top: 6rem;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4 {
+  color: #f9fafb;
+}
+
+.prose h2 {
+  font-size: 1.625rem;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .prose h2 {
+  border-bottom-color: #1e293b;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose h4 {
+  font-size: 1.0625rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Paragraphs */
+.prose p {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Links */
+.prose a {
+  color: #6366f1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color 0.2s;
+}
+
+.prose a:hover {
+  color: #4f46e5;
+}
+
+.dark .prose a {
+  color: #818cf8;
+}
+
+.dark .prose a:hover {
+  color: #a5b4fc;
+}
+
+/* Lists */
+.prose ul,
+.prose ol {
+  margin: 1.25rem 0;
+  padding-left: 1.625rem;
+}
+
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
+.prose li {
+  margin: 0.5rem 0;
+  padding-left: 0.375rem;
+}
+
+.prose li::marker {
+  color: #6366f1;
+}
+
+/* Blockquotes */
+.prose blockquote {
+  border-left: 4px solid #6366f1;
+  padding: 0.75rem 1.25rem;
+  margin: 1.75rem 0;
+  background: #eef2ff;
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+  color: #4b5563;
+}
+
+.dark .prose blockquote {
+  background: rgba(99, 102, 241, 0.1);
+  color: #9ca3af;
+}
+
+/* Inline code */
+.prose code:not(pre code) {
+  background: #f1f5f9;
+  color: #e11d48;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.875em;
+  font-family: var(--font-geist-mono), 'Fira Code', monospace;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .prose code:not(pre code) {
+  background: #1e293b;
+  color: #fb7185;
+  border-color: #334155;
+}
+
+/* Code blocks */
+.prose pre {
+  margin: 1.75rem 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #1e1e2e;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+}
+
+.prose pre code {
+  background: none;
+  color: inherit;
+  font-size: 0.875rem;
+  padding: 1.25rem;
+  display: block;
+  overflow-x: auto;
+  line-height: 1.7;
+  font-family: var(--font-geist-mono), 'Fira Code', monospace;
+  border: none;
+}
+
+/* Tables */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.75rem 0;
+  font-size: 0.9375rem;
+}
+
+.prose thead {
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.dark .prose thead {
+  background: #0f172a;
+  border-bottom-color: #1e293b;
+}
+
+.prose th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+}
+
+.dark .prose th {
+  color: #f1f5f9;
+}
+
+.prose td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #4b5563;
+}
+
+.dark .prose td {
+  border-bottom-color: #1e293b;
+  color: #9ca3af;
+}
+
+/* HR */
+.prose hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 2.5rem 0;
+}
+
+.dark .prose hr {
+  border-top-color: #1e293b;
+}
+
+/* Images */
+.prose img {
+  border-radius: 0.75rem;
+  margin: 1.75rem auto;
+  display: block;
+  max-width: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+/* Strong / em */
+.prose strong {
+  font-weight: 700;
+  color: #111827;
+}
+
+.dark .prose strong {
+  color: #f9fafb;
+}
+
+/* Callout-style custom elements */
+.prose .callout {
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.prose .callout-info {
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  color: #1e40af;
+}
+
+.prose .callout-warning {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  color: #92400e;
+}
+
+.prose .callout-danger {
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  color: #991b1b;
+}
+
+.dark .prose .callout-info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #93c5fd;
+}
+
+.dark .prose .callout-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fcd34d;
+}
+
+.dark .prose .callout-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+}

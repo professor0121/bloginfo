@@ -1,0 +1,169 @@
+---
+title: "Understanding AI Agents in 2025: A Developer's Guide"
+description: "Explore how AI agents work, the key frameworks and tools available, and how to build your first autonomous AI agent using modern LLM APIs."
+date: "2025-05-01"
+category: ai
+tags: ["ai", "llm", "agents", "openai", "langchain", "automation"]
+image: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=1200&h=630&fit=crop"
+published: true
+featured: true
+author: sarah
+---
+
+AI agents have gone from science fiction to production reality in just a few years. In 2025, building autonomous agents that can plan, reason, and execute multi-step tasks is within reach of every developer. Let's explore how they work.
+
+## What is an AI Agent?
+
+An AI agent is a system that can:
+
+1. **Perceive** its environment (read inputs, call tools)
+2. **Reason** about what to do (using an LLM)
+3. **Act** on its decisions (execute code, call APIs)
+4. **Learn** from feedback (optional but powerful)
+
+Unlike a simple chatbot that responds to queries, an agent can autonomously complete complex, multi-step tasks.
+
+## The Agent Loop
+
+Every agent runs on a core loop:
+
+```
+Observe → Think → Act → Observe → ...
+```
+
+In code, this looks like:
+
+```python
+def run_agent(goal: str, tools: list[Tool]) -> str:
+    messages = [{"role": "user", "content": goal}]
+    
+    while True:
+        # Think: Ask the LLM what to do
+        response = llm.complete(messages, tools=tools)
+        
+        # Check if done
+        if response.finish_reason == "stop":
+            return response.content
+        
+        # Act: Execute the tool the LLM chose
+        tool_result = execute_tool(response.tool_call)
+        
+        # Observe: Add result back to context
+        messages.append({"role": "tool", "content": tool_result})
+```
+
+## Key Frameworks in 2025
+
+### LangChain / LangGraph
+
+LangGraph is the go-to for complex agent workflows:
+
+```python
+from langgraph.graph import StateGraph
+
+def create_agent():
+    graph = StateGraph(AgentState)
+    graph.add_node("planner", plan_step)
+    graph.add_node("executor", execute_step)
+    graph.add_edge("planner", "executor")
+    graph.add_conditional_edges("executor", should_continue)
+    return graph.compile()
+```
+
+### OpenAI Assistants API
+
+For simpler use cases, OpenAI's Assistants API handles the state management:
+
+```typescript
+import OpenAI from 'openai';
+
+const client = new OpenAI();
+
+// Create an assistant with tools
+const assistant = await client.beta.assistants.create({
+  name: 'Research Agent',
+  instructions: 'You help users research topics using web search.',
+  model: 'gpt-4o',
+  tools: [{ type: 'web_search' }, { type: 'code_interpreter' }],
+});
+
+// Create a thread and run
+const thread = await client.beta.threads.create();
+const run = await client.beta.threads.runs.create(thread.id, {
+  assistant_id: assistant.id,
+});
+```
+
+## Building a Research Agent
+
+Here's a practical example — a research agent that can search the web and summarize findings:
+
+```typescript
+interface Tool {
+  name: string;
+  description: string;
+  execute: (params: Record<string, string>) => Promise<string>;
+}
+
+const tools: Tool[] = [
+  {
+    name: 'web_search',
+    description: 'Search the web for current information',
+    execute: async ({ query }) => await searchWeb(query),
+  },
+  {
+    name: 'summarize',
+    description: 'Summarize a long piece of text',
+    execute: async ({ text }) => await summarizeText(text),
+  },
+];
+
+async function runResearchAgent(topic: string): Promise<string> {
+  const agent = new Agent({ model: 'gpt-4o', tools });
+  return agent.run(`Research the following topic thoroughly: ${topic}`);
+}
+```
+
+## Memory & Context Management
+
+One of the biggest challenges with agents is managing context:
+
+### Short-term Memory
+- The conversation history / message buffer
+- Limit with sliding window or summarization
+
+### Long-term Memory
+- Vector databases (Pinecone, Weaviate, pgvector)
+- Store and retrieve relevant information
+
+```python
+from langchain.memory import VectorStoreRetrieverMemory
+
+memory = VectorStoreRetrieverMemory(
+    retriever=vectorstore.as_retriever(k=5)
+)
+```
+
+## Safety Considerations
+
+When deploying agents, always:
+
+- **Confirm destructive actions** before execution
+- **Rate limit** tool calls to prevent runaway loops
+- **Audit logs** every action the agent takes
+- **Scope permissions** — agents should only access what they need
+
+## The Future of AI Agents
+
+In 2025, we're seeing:
+
+- **Multi-agent systems** — agents coordinating with each other
+- **Persistent agents** — agents that run continuously in the background
+- **Domain-specific agents** — specialized for coding, research, customer service
+- **Agent marketplaces** — buy and sell agent capabilities as APIs
+
+## Conclusion
+
+AI agents are fundamentally changing how we build software. By combining LLMs with tools, memory, and reasoning, we can automate complex tasks that previously required human judgment.
+
+Start small — build an agent that can do one thing well, then gradually expand its capabilities. The tooling has never been better.

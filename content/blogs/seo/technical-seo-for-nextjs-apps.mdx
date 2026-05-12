@@ -1,0 +1,209 @@
+---
+title: "Technical SEO for Next.js Apps: The Complete 2025 Guide"
+description: "Master technical SEO for Next.js applications — from metadata and structured data to Core Web Vitals, sitemaps, and dynamic OG images."
+date: "2025-03-20"
+category: seo
+tags: ["seo", "nextjs", "metadata", "core-web-vitals", "structured-data"]
+image: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=1200&h=630&fit=crop"
+published: true
+featured: false
+author: team
+---
+
+Technical SEO is often the difference between a site that ranks and one that doesn't. For Next.js applications, the App Router provides powerful built-in tools to nail every SEO requirement. Here's how to use them effectively.
+
+## Metadata API
+
+Next.js 13+ has a first-class Metadata API that replaces `next/head`:
+
+```tsx
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'My Blog Post',
+  description: 'A comprehensive guide to Next.js SEO',
+  keywords: ['nextjs', 'seo', 'metadata'],
+  openGraph: {
+    title: 'My Blog Post',
+    description: 'A comprehensive guide to Next.js SEO',
+    type: 'article',
+    publishedTime: '2025-03-20',
+    authors: ['Alex Chen'],
+    images: [{ url: '/og/my-post.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'My Blog Post',
+    creator: '@devinsights',
+  },
+};
+```
+
+### Dynamic Metadata
+
+For dynamic pages, use `generateMetadata`:
+
+```tsx
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const post = await getPost(params.slug);
+  if (!post) return { title: 'Not Found' };
+
+  return {
+    title: post.title,
+    description: post.description,
+    alternates: {
+      canonical: `https://yourdomain.com/blog/${params.slug}`,
+    },
+  };
+}
+```
+
+## Structured Data (JSON-LD)
+
+Add structured data for rich results in Google Search:
+
+```tsx
+function BlogPostSchema({ post }: { post: BlogPost }) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    image: post.image,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://yourdomain.com/blog/${post.slug}`,
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+```
+
+## Sitemap Generation
+
+Next.js has a built-in sitemap generator:
+
+```tsx
+// app/sitemap.ts
+import type { MetadataRoute } from 'next';
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const posts = getPosts();
+
+  return [
+    { url: 'https://yourdomain.com', priority: 1, changeFrequency: 'daily' },
+    ...posts.map(post => ({
+      url: `https://yourdomain.com/blog/${post.slug}`,
+      lastModified: new Date(post.date),
+      priority: 0.8,
+    })),
+  ];
+}
+```
+
+## Dynamic OG Images
+
+Generate beautiful Open Graph images programmatically:
+
+```tsx
+// app/blog/[slug]/opengraph-image.tsx
+import { ImageResponse } from 'next/og';
+
+export default async function Image({ params }: { params: { slug: string } }) {
+  const post = await getPost(params.slug);
+
+  return new ImageResponse(
+    (
+      <div style={{ display: 'flex', flexDirection: 'column', background: '#1e1e2e', width: '100%', height: '100%', padding: 60 }}>
+        <h1 style={{ fontSize: 60, color: 'white', fontWeight: 700 }}>
+          {post.title}
+        </h1>
+        <p style={{ fontSize: 24, color: '#94a3b8' }}>{post.description}</p>
+      </div>
+    ),
+    { width: 1200, height: 630 }
+  );
+}
+```
+
+## Core Web Vitals
+
+### Largest Contentful Paint (LCP)
+
+- Use `priority` on hero images
+- Preload critical resources
+- Use static generation wherever possible
+
+### Cumulative Layout Shift (CLS)
+
+- Always specify `width` and `height` on images
+- Use font-display: swap for web fonts
+- Reserve space for ads before they load
+
+### Interaction to Next Paint (INP)
+
+- Keep JavaScript bundles small
+- Use `React.lazy` and `dynamic` imports
+- Debounce expensive event handlers
+
+```tsx
+import dynamic from 'next/dynamic';
+
+// Only load heavy components when needed
+const HeavyChart = dynamic(() => import('./Chart'), {
+  loading: () => <ChartSkeleton />,
+  ssr: false,
+});
+```
+
+## Robots.txt
+
+```tsx
+// app/robots.ts
+export default function robots() {
+  return {
+    rules: [{ userAgent: '*', allow: '/', disallow: '/api/' }],
+    sitemap: 'https://yourdomain.com/sitemap.xml',
+  };
+}
+```
+
+## Canonical URLs
+
+Always set canonical URLs to prevent duplicate content:
+
+```tsx
+export const metadata = {
+  alternates: {
+    canonical: 'https://yourdomain.com/blog/my-post',
+  },
+};
+```
+
+## Performance Checklist
+
+| Optimization | Impact | Difficulty |
+|---|---|---|
+| Static generation | High | Low |
+| Image optimization | High | Low |
+| Font optimization | Medium | Low |
+| Dynamic imports | Medium | Medium |
+| Caching headers | High | Medium |
+| Edge functions | High | High |
+
+## Conclusion
+
+Next.js provides everything you need for excellent technical SEO out of the box. The key is to use `generateMetadata()` for every page, add JSON-LD structured data, generate a dynamic sitemap, and keep your Core Web Vitals green.
+
+Combined with great content, these technical foundations will help your Next.js app rank.
